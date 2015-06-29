@@ -37,23 +37,23 @@ import com.seyren.core.util.config.SeyrenConfig;
 
 @Named
 public class HipChatNotificationService implements NotificationService {
-    
+
     private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(HipChatNotificationService.class);
-    
+
     private final SeyrenConfig seyrenConfig;
     private final String baseUrl;
-    
+
     @Inject
     public HipChatNotificationService(SeyrenConfig seyrenConfig) {
         this.seyrenConfig = seyrenConfig;
         this.baseUrl = seyrenConfig.getHipChatBaseUrl();
     }
-    
+
     protected HipChatNotificationService(SeyrenConfig seyrenConfig, String baseUrl) {
         this.seyrenConfig = seyrenConfig;
         this.baseUrl = baseUrl;
     }
-    
+
     @Override
     public void sendNotification(Check check, Subscription subscription, List<Alert> alerts) throws NotificationFailedException {
         String token = seyrenConfig.getHipChatAuthToken();
@@ -76,16 +76,16 @@ public class HipChatNotificationService implements NotificationService {
             throw new NotificationFailedException("Failed to send notification to HipChat", e);
         }
     }
-    
+
     private String getHipChatMessage(Check check) {
         String message = "Check <a href=" + seyrenConfig.getBaseUrl() + "/#/checks/" + check.getId() + ">" + check.getName() + "</a> has entered its " + check.getState().toString() + " state.";
         return message;
     }
-    
+
     private void sendMessage(String message, MessageColor color, String[] roomIds, String from, String authToken, boolean notify) {
         for (String roomId : roomIds) {
             LOGGER.info("Posting: {} to {}: {} {}", from, roomId, message, color);
-            HttpClient client = HttpClientBuilder.create().build();
+            HttpClient client = HttpClientBuilder.create().useSystemProperties().build();
             String url = baseUrl + "/v2/room/" + roomId + "/notification?auth_token=" + authToken;
             HttpPost post = new HttpPost(url);
 
@@ -107,12 +107,12 @@ public class HipChatNotificationService implements NotificationService {
             }
         }
     }
-    
+
     @Override
     public boolean canHandle(SubscriptionType subscriptionType) {
         return subscriptionType == SubscriptionType.HIPCHAT;
     }
-    
+
     private enum MessageColor {
         YELLOW, RED, GREEN, PURPLE, RANDOM;
     }

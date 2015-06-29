@@ -42,35 +42,35 @@ import com.seyren.core.util.config.SeyrenConfig;
 
 @Named
 public class HubotNotificationService implements NotificationService {
-    
+
     private static final Logger LOGGER = LoggerFactory.getLogger(HubotNotificationService.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    
+
     private final SeyrenConfig seyrenConfig;
-    
+
     @Inject
     public HubotNotificationService(SeyrenConfig seyrenConfig) {
         this.seyrenConfig = seyrenConfig;
     }
-    
+
     @Override
     public void sendNotification(Check check, Subscription subscription, List<Alert> alerts) throws NotificationFailedException {
         String hubotUrl = StringUtils.trimToNull(seyrenConfig.getHubotUrl());
-        
+
         if (hubotUrl == null) {
             LOGGER.warn("Hubot URL needs to be set before sending notifications to Hubot");
             return;
         }
-        
+
         Map<String, Object> body = new HashMap<String, Object>();
         body.put("seyrenUrl", seyrenConfig.getBaseUrl());
         body.put("check", check);
         body.put("subscription", subscription);
         body.put("alerts", alerts);
         body.put("rooms", subscription.getTarget().split(","));
-        
-        HttpClient client = HttpClientBuilder.create().build();
-        
+
+        HttpClient client = HttpClientBuilder.create().useSystemProperties().build();
+
         HttpPost post = new HttpPost(hubotUrl + "/seyren/alert");
         try {
             HttpEntity entity = new StringEntity(MAPPER.writeValueAsString(body), ContentType.APPLICATION_JSON);
@@ -82,10 +82,10 @@ public class HubotNotificationService implements NotificationService {
             HttpClientUtils.closeQuietly(client);
         }
     }
-    
+
     @Override
     public boolean canHandle(SubscriptionType subscriptionType) {
         return subscriptionType == SubscriptionType.HUBOT;
     }
-    
+
 }
