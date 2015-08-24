@@ -30,8 +30,11 @@ import com.squareup.pagerduty.incidents.NotifyResult;
 import com.squareup.pagerduty.incidents.PagerDuty;
 import com.squareup.pagerduty.incidents.Resolution;
 import com.squareup.pagerduty.incidents.Trigger;
+import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import retrofit.client.ApacheClient;
 import retrofit.Endpoints;
 import retrofit.RestAdapter;
 
@@ -60,9 +63,9 @@ public class PagerDutyNotificationService implements NotificationService {
 
     @Override
     public void sendNotification(Check check, Subscription subscription, List<Alert> alerts) throws NotificationFailedException {
-        PagerDuty pagerDuty = PagerDuty.create(subscription.getTarget(), new RestAdapter.Builder()
-                .setEndpoint(Endpoints.newFixedEndpoint(baseUrl))
-                .build());
+        HttpClient httpclient = HttpClientBuilder.create().useSystemProperties().build();
+        RestAdapter restadapter = new RestAdapter.Builder().setClient(new ApacheClient(httpclient)).setEndpoint(Endpoints.newFixedEndpoint(baseUrl)).build();
+        PagerDuty pagerDuty = PagerDuty.create(subscription.getTarget(), restadapter);
         NotifyResult result = null;
 
         try {
